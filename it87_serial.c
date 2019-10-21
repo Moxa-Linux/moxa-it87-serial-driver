@@ -106,6 +106,7 @@ static struct it87_chip it87_chip = {
 	.lock = __SPIN_LOCK_UNLOCKED(it87_chip.lock),
 };
 
+/* Serial port configuration registers */
 #define IT87_REG_SER_ACT	0x30
 #define IT87_REG_SER_SCR	0xf0
 
@@ -137,8 +138,9 @@ static void it87_serial_write(int port, u8 reg, u8 val)
 	superio_exit(REG_2E);
 }
 
-static ssize_t it87_serial_rs485_show(struct device *dev, struct device_attribute *attr,
-			char *buf)
+static ssize_t it87_serial_rs485_show(struct device *dev,
+				      struct device_attribute *attr,
+				      char *buf)
 {
 	int port;
 	struct it87_serial *serial;
@@ -153,8 +155,9 @@ static ssize_t it87_serial_rs485_show(struct device *dev, struct device_attribut
 	return sprintf(buf, "%d\n", IT87_REG_SER_SCR_RS485_GET(serial));
 }
 
-static ssize_t it87_serial_rs485_store(struct device *dev, struct device_attribute *attr,
-			 const char *buf, size_t count)
+static ssize_t it87_serial_rs485_store(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
 {
 	int port;
 	struct it87_serial *serial;
@@ -170,12 +173,18 @@ static ssize_t it87_serial_rs485_store(struct device *dev, struct device_attribu
 	return count;
 }
 
-static DEVICE_ATTR(serial1_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial2_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial3_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial4_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial5_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial6_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial1_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial2_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial3_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial4_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial5_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial6_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
 
 static struct attribute *it87_serial1[] =
 {
@@ -278,7 +287,8 @@ static int it87_find_chip(struct it87_chip *chip)
 	switch (chip_type) {
 	case IT8786E_DEVID:
 		chip->num_serial = 6;
-		port = kcalloc(chip->num_serial, sizeof(const struct it87_serial), GFP_KERNEL);
+		port = kcalloc(chip->num_serial,
+			       sizeof(const struct it87_serial), GFP_KERNEL);
 		IT87_SERIAL_LDN(port[0], 0x01);
 		IT87_SERIAL_LDN(port[1], 0x02);
 		IT87_SERIAL_LDN(port[2], 0x08);
