@@ -119,21 +119,21 @@ static struct it87_chip it87_chip = {
 	else \
 		port->rs485 &= ~IT87_REG_SER_SCR_RS485;
 
-static u8 it87_serial_read(int port, u8 reg)
+static u8 it87_serial_read(int num, u8 reg)
 {
 	u8 val;
 
 	superio_enter(REG_2E);
-	superio_select(REG_2E, it87_chip.serial_port[port].ldn);
+	superio_select(REG_2E, it87_chip.serial_port[num].ldn);
 	val = superio_inb(REG_2E, IT87_REG_SER_SCR);
 	superio_exit(REG_2E);
 	return val;
 }
 
-static void it87_serial_write(int port, u8 reg, u8 val)
+static void it87_serial_write(int num, u8 reg, u8 val)
 {
 	superio_enter(REG_2E);
-	superio_select(REG_2E, it87_chip.serial_port[port].ldn);
+	superio_select(REG_2E, it87_chip.serial_port[num].ldn);
 	superio_outb(REG_2E, reg, val);
 	superio_exit(REG_2E);
 }
@@ -142,32 +142,32 @@ static ssize_t it87_serial_rs485_show(struct device *dev,
 				      struct device_attribute *attr,
 				      char *buf)
 {
-	int port;
-	struct it87_serial *serial;
+	int num;
+	struct it87_serial *port;
 
-	port = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1;
-	serial = &it87_chip.serial_port[port];
+	num = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1;
+	port = &it87_chip.serial_port[num];
 
 	spin_lock(&it87_chip.lock);
-	serial->rs485 = it87_serial_read(port, IT87_REG_SER_SCR);
+	port->rs485 = it87_serial_read(num, IT87_REG_SER_SCR);
 	spin_unlock(&it87_chip.lock);
 
-	return sprintf(buf, "%d\n", IT87_REG_SER_SCR_RS485_GET(serial));
+	return sprintf(buf, "%d\n", IT87_REG_SER_SCR_RS485_GET(port));
 }
 
 static ssize_t it87_serial_rs485_store(struct device *dev,
 				       struct device_attribute *attr,
 				       const char *buf, size_t count)
 {
-	int port;
-	struct it87_serial *serial;
+	int num;
+	struct it87_serial *port;
 
-	port = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1 ;
-	serial = &it87_chip.serial_port[port];
+	num = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1 ;
+	port = &it87_chip.serial_port[num];
 
 	spin_lock(&it87_chip.lock);
-	IT87_REG_SER_SCR_RS485_SET(serial, simple_strtoul(buf, NULL, 10));
-	it87_serial_write(port, IT87_REG_SER_SCR, serial->rs485);
+	IT87_REG_SER_SCR_RS485_SET(port, simple_strtoul(buf, NULL, 10));
+	it87_serial_write(num, IT87_REG_SER_SCR, serial->rs485);
 	spin_unlock(&it87_chip.lock);
 
 	return count;
