@@ -90,7 +90,7 @@ static inline int superio_inw(int ioreg, int reg)
 struct it87_serial {
 	u8 ldn;
 	u8 act;
-	u8 rs485;
+	u8 scr;
 };
 
 struct it87_chip {
@@ -149,7 +149,7 @@ static ssize_t it87_serial_rs485_show(struct device *dev,
 	port = &it87_chip.serial_port[num];
 
 	spin_lock(&it87_chip.lock);
-	port->rs485 = it87_serial_read(num, IT87_REG_SER_SCR);
+	port->scr = it87_serial_read(num, IT87_REG_SER_SCR);
 	spin_unlock(&it87_chip.lock);
 
 	return sprintf(buf, "%d\n", IT87_REG_SER_SCR_RS485_GET(port));
@@ -167,7 +167,7 @@ static ssize_t it87_serial_rs485_store(struct device *dev,
 
 	spin_lock(&it87_chip.lock);
 	IT87_REG_SER_SCR_RS485_SET(port, simple_strtoul(buf, NULL, 10));
-	it87_serial_write(num, IT87_REG_SER_SCR, serial->rs485);
+	it87_serial_write(num, IT87_REG_SER_SCR, port->scr);
 	spin_unlock(&it87_chip.lock);
 
 	return count;
