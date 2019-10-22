@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/miscdevice.h>
 #include <linux/errno.h>
+#include <linux/bitops.h> /* bitops */
 #include <linux/slab.h> /* kcalloc */
 #include <linux/uaccess.h> /* copy_to_user */
 
@@ -90,7 +91,7 @@ static inline int superio_inw(int ioreg, int reg)
 struct it87_serial {
 	u8 ldn;
 	u8 act;
-	u8 rs485;
+	u8 scr;
 };
 
 struct it87_chip {
@@ -106,76 +107,89 @@ static struct it87_chip it87_chip = {
 	.lock = __SPIN_LOCK_UNLOCKED(it87_chip.lock),
 };
 
+/* Serial port configuration registers */
 #define IT87_REG_SER_ACT	0x30
 #define IT87_REG_SER_SCR	0xf0
 
 /* Special Configuration Register 0xF0 */
-#define IT87_REG_SER_SCR_RS485	0x80
-#define IT87_REG_SER_SCR_RS485_GET(port)	(port->rs485 >> 7)
-#define IT87_REG_SER_SCR_RS485_SET(port, val)	\
-	if (val) \
-		port->rs485 |= IT87_REG_SER_SCR_RS485; \
-	else \
-		port->rs485 &= ~IT87_REG_SER_SCR_RS485;
+#define IT87_REG_SER_SCR_RS485		7
 
-static u8 it87_serial_read(int port, u8 reg)
+/* Macros */
+#define IT87_REG_SER_SET_BIT(reg, val, bit)	\
+	if (val) \
+		reg |= BIT(bit); \
+	else \
+		reg &= ~(BIT(bit));
+#define IT87_REG_SER_GET_BIT(reg, bit)		((reg & BIT(bit)) >> bit)
+
+static u8 it87_serial_read(int num, u8 reg)
 {
 	u8 val;
 
 	superio_enter(REG_2E);
-	superio_select(REG_2E, it87_chip.serial_port[port].ldn);
+	superio_select(REG_2E, it87_chip.serial_port[num].ldn);
 	val = superio_inb(REG_2E, IT87_REG_SER_SCR);
 	superio_exit(REG_2E);
 	return val;
 }
 
-static void it87_serial_write(int port, u8 reg, u8 val)
+static void it87_serial_write(int num, u8 reg, u8 val)
 {
 	superio_enter(REG_2E);
-	superio_select(REG_2E, it87_chip.serial_port[port].ldn);
+	superio_select(REG_2E, it87_chip.serial_port[num].ldn);
 	superio_outb(REG_2E, reg, val);
 	superio_exit(REG_2E);
 }
 
-static ssize_t it87_serial_rs485_show(struct device *dev, struct device_attribute *attr,
-			char *buf)
+static ssize_t it87_serial_rs485_show(struct device *dev,
+				      struct device_attribute *attr,
+				      char *buf)
 {
-	int port;
-	struct it87_serial *serial;
+	int num;
+	struct it87_serial *port;
 
-	port = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1;
-	serial = &it87_chip.serial_port[port];
+	num = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1;
+	port = &it87_chip.serial_port[num];
 
 	spin_lock(&it87_chip.lock);
-	serial->rs485 = it87_serial_read(port, IT87_REG_SER_SCR);
+	port->scr = it87_serial_read(num, IT87_REG_SER_SCR);
 	spin_unlock(&it87_chip.lock);
 
-	return sprintf(buf, "%d\n", IT87_REG_SER_SCR_RS485_GET(serial));
+	return sprintf(buf, "%ld\n",
+		       IT87_REG_SER_GET_BIT(port->scr, IT87_REG_SER_SCR_RS485));
 }
 
-static ssize_t it87_serial_rs485_store(struct device *dev, struct device_attribute *attr,
-			 const char *buf, size_t count)
+static ssize_t it87_serial_rs485_store(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
 {
-	int port;
-	struct it87_serial *serial;
+	int num;
+	struct it87_serial *port;
 
-	port = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1 ;
-	serial = &it87_chip.serial_port[port];
+	num = simple_strtoul(&attr->attr.name[strlen("serial")], NULL, 10) - 1 ;
+	port = &it87_chip.serial_port[num];
 
 	spin_lock(&it87_chip.lock);
-	IT87_REG_SER_SCR_RS485_SET(serial, simple_strtoul(buf, NULL, 10));
-	it87_serial_write(port, IT87_REG_SER_SCR, serial->rs485);
+	IT87_REG_SER_SET_BIT(port->scr, simple_strtoul(buf, NULL, 10),
+			     IT87_REG_SER_SCR_RS485);
+	it87_serial_write(num, IT87_REG_SER_SCR, port->scr);
 	spin_unlock(&it87_chip.lock);
 
 	return count;
 }
 
-static DEVICE_ATTR(serial1_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial2_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial3_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial4_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial5_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
-static DEVICE_ATTR(serial6_rs485, (S_IWUSR | S_IRUGO), it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial1_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial2_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial3_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial4_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial5_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
+static DEVICE_ATTR(serial6_rs485, (S_IWUSR | S_IRUGO),
+		   it87_serial_rs485_show, it87_serial_rs485_store);
 
 static struct attribute *it87_serial1[] =
 {
@@ -278,7 +292,8 @@ static int it87_find_chip(struct it87_chip *chip)
 	switch (chip_type) {
 	case IT8786E_DEVID:
 		chip->num_serial = 6;
-		port = kcalloc(chip->num_serial, sizeof(const struct it87_serial), GFP_KERNEL);
+		port = kcalloc(chip->num_serial,
+			       sizeof(const struct it87_serial), GFP_KERNEL);
 		IT87_SERIAL_LDN(port[0], 0x01);
 		IT87_SERIAL_LDN(port[1], 0x02);
 		IT87_SERIAL_LDN(port[2], 0x08);
