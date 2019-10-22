@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/miscdevice.h>
 #include <linux/errno.h>
+#include <linux/bitops.h> /* bitops */
 #include <linux/slab.h> /* kcalloc */
 #include <linux/uaccess.h> /* copy_to_user */
 
@@ -111,13 +112,15 @@ static struct it87_chip it87_chip = {
 #define IT87_REG_SER_SCR	0xf0
 
 /* Special Configuration Register 0xF0 */
-#define IT87_REG_SER_SCR_RS485	0x80
-#define IT87_REG_SER_SCR_RS485_GET(port)	(port->rs485 >> 7)
-#define IT87_REG_SER_SCR_RS485_SET(port, val)	\
+#define IT87_REG_SER_SCR_RS485		7
+
+/* Macros */
+#define IT87_REG_SER_SET_BIT(reg, val, bit)	\
 	if (val) \
-		port->rs485 |= IT87_REG_SER_SCR_RS485; \
+		reg |= BIT(bit); \
 	else \
-		port->rs485 &= ~IT87_REG_SER_SCR_RS485;
+		reg &= ~(BIT(bit));
+#define IT87_REG_SER_GET_BIT(reg, bit)		((reg & BIT(bit)) >> bit)
 
 static u8 it87_serial_read(int num, u8 reg)
 {
@@ -152,7 +155,8 @@ static ssize_t it87_serial_rs485_show(struct device *dev,
 	port->scr = it87_serial_read(num, IT87_REG_SER_SCR);
 	spin_unlock(&it87_chip.lock);
 
-	return sprintf(buf, "%d\n", IT87_REG_SER_SCR_RS485_GET(port));
+	return sprintf(buf, "%ld\n",
+		       IT87_REG_SER_GET_BIT(port->scr, IT87_REG_SER_SCR_RS485));
 }
 
 static ssize_t it87_serial_rs485_store(struct device *dev,
@@ -166,7 +170,8 @@ static ssize_t it87_serial_rs485_store(struct device *dev,
 	port = &it87_chip.serial_port[num];
 
 	spin_lock(&it87_chip.lock);
-	IT87_REG_SER_SCR_RS485_SET(port, simple_strtoul(buf, NULL, 10));
+	IT87_REG_SER_SET_BIT(port->scr, simple_strtoul(buf, NULL, 10),
+			     IT87_REG_SER_SCR_RS485);
 	it87_serial_write(num, IT87_REG_SER_SCR, port->scr);
 	spin_unlock(&it87_chip.lock);
 
