@@ -1,5 +1,5 @@
-moxa-it87-serial-driver (0.1.0+deb9) stretch; urgency=medium
+moxa-it87-serial-driver (1.0.0) stretch; urgency=medium
 
   * Initial release
 
- -- Remus Wu <RemusTY.Wu@moxa.com>  Tue, 22 Oct 2019 13:50:09 +0800
+ -- Remus Wu <remusty.wu@moxa.com>  Wed, 20 Nov 2019 17:18:57 +0800
