@@ -8,7 +8,7 @@ Build-Depends:
 Standards-Version: 4.1.3
 Homepage: http://www.moxa.com/
 
-Package: moxa-it87-serial-driver
+Package: moxa-it87-serial-driver-amd64
 Architecture: amd64
 Depends:
  ${misc:Depends},
