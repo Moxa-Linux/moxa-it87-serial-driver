@@ -1,0 +1,18 @@
+Source: moxa-it87-serial-driver
+Section: kernel
+Priority: optional
+Maintainer: Remus Wu <remusty.wu@moxa.com>
+Build-Depends:
+ debhelper (>= 10),
+ linux-headers-4.9.0-11-amd64
+Standards-Version: 4.1.3
+Homepage: http://www.moxa.com/
+
+Package: moxa-it87-serial-driver-amd64
+Architecture: amd64
+Depends:
+ ${misc:Depends},
+ linux-image-4.9.0-11-amd64
+Description: Serial Port Register Control for IT8786 Super I/O chips
+ This driver is tested with ITE IT8786E super I/O chips, and
+ supports the IT8786E Super I/O chips as well.
