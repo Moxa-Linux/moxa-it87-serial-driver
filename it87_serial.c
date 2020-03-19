@@ -26,6 +26,7 @@
 #define DRVNAME	"it87_serial"
 
 /* Chip Id numbers */
+#define IT8783F_DEVID	0x8783
 #define IT8786E_DEVID	0x8786
 
 /* IO Ports */
@@ -290,6 +291,17 @@ static int it87_find_chip(struct it87_chip *chip)
 	spin_unlock(&chip->lock);
 
 	switch (chip_type) {
+	case IT8783F_DEVID:
+		chip->num_serial = 6;
+		port = kcalloc(chip->num_serial,
+			       sizeof(const struct it87_serial), GFP_KERNEL);
+		IT87_SERIAL_LDN(port[0], 0x01);
+		IT87_SERIAL_LDN(port[1], 0x02);
+		IT87_SERIAL_LDN(port[2], 0x08);
+		IT87_SERIAL_LDN(port[3], 0x09);
+		IT87_SERIAL_LDN(port[4], 0x0a);
+		IT87_SERIAL_LDN(port[5], 0x0b);
+		chip->serial_port = port;
 	case IT8786E_DEVID:
 		chip->num_serial = 6;
 		port = kcalloc(chip->num_serial,
