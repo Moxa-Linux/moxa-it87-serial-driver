@@ -13,6 +13,6 @@ Architecture: amd64
 Depends:
  ${misc:Depends},
  linux-image-4.9.0-12-amd64
-Description: Serial Port Register Control for IT8786 Super I/O chips
- This driver is tested with ITE IT8786E super I/O chips, and
- supports the IT8786E Super I/O chips as well.
+Description: Serial Port Register Control for IT87xx Super I/O chips
+ This driver has been tested with ITE IT8786E and ITE IT8783F Super
+ I/O chips and supports them as well.
