@@ -386,3 +386,4 @@ module_exit(it87_serial_exit);
 MODULE_DESCRIPTION("Serial Port Register Control for IT8786 Super I/O chips");
 MODULE_AUTHOR("Remus Wu <remusty.wu@moxa.com>");
 MODULE_LICENSE("GPL");
+MODULE_VERSION("1.1.0");
