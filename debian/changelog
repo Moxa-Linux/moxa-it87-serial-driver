@@ -1,0 +1,5 @@
+moxa-it87-serial-driver (1.1.0+deb10) buster; urgency=medium
+
+  * Initial release
+
+ -- Wayne Wei <waynew.wei@moxa.com>  Wed, 22 Nov 2020 17:18:57 +0800
