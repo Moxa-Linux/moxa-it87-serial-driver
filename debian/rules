@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+KRELEASE=4.19.0-9-amd64
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(MAKE) KRELEASE=$(KRELEASE) modules
+
+override_dh_auto_install:
+	$(info Skip dh_auto_install)
+
+override_dh_auto_clean:
+	$(MAKE) KRELEASE=$(KRELEASE) clean
+
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
