@@ -1,2 +1,2 @@
-it87_serial.ko /lib/modules/4.19.0-9-amd64/kernel/drivers/misc/
+it87_serial.ko /lib/modules/4.19.0-13-amd64/kernel/drivers/misc/
 it87_serial.conf /usr/lib/modules-load.d

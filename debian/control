@@ -5,7 +5,7 @@ Maintainer: Remus Wu <remusty.wu@moxa.com>
 Uploaders:  Wayne Wei <waynew.wei@moxa.com>
 Build-Depends:
  debhelper (>= 10),
- linux-headers-4.19.0-9-amd64
+ linux-headers-4.19.0-13-amd64
 Standards-Version: 4.1.3
 Homepage: http://www.moxa.com/
 
@@ -13,7 +13,7 @@ Package: moxa-it87-serial-driver-amd64
 Architecture: amd64
 Depends:
  ${misc:Depends},
- linux-image-4.19.0-9-amd64
+ linux-image-4.19.0-13-amd64
 Description: Serial Port Register Control for IT87xx Super I/O chips
  This driver has been tested with ITE IT8786E and ITE IT8783F Super
  I/O chips and supports them as well.
