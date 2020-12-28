@@ -10,7 +10,7 @@ mil-internal-release_build:
         - Runner-Buster
     stage: mil-internal-release_build
     before_script:
-        - echo "deb http://mil-internal-apt:8080/mirror-debian_20200610/debian/ buster main" > /etc/apt/sources.list
+        - echo "deb http://mil-internal-apt:8080/mirror-debian_20201211/debian/ buster main" > /etc/apt/sources.list
         - curl -fsSL http://mil-internal-apt:8080/mil_internal_apt.gpg | apt-key add -
         - apt-get update
         - apt-get install -y -qq --no-install-recommends build-essential devscripts
