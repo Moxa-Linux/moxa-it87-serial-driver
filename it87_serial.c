@@ -302,6 +302,7 @@ static int it87_find_chip(struct it87_chip *chip)
 		IT87_SERIAL_LDN(port[4], 0x0a);
 		IT87_SERIAL_LDN(port[5], 0x0b);
 		chip->serial_port = port;
+		break;
 	case IT8786E_DEVID:
 		chip->num_serial = 6;
 		port = kcalloc(chip->num_serial,
