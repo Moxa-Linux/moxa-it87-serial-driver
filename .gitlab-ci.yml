@@ -1,44 +1,147 @@
 variables:
-    GIT_DEPTH: "1"
+  GIT_DEPTH: "1"
+  KERNEL_REV: "4.19.0-14-amd64"
+  SIGNSV_PROJECT_NAME: "WHISKEYLAKE"
+  SIGNSV_TARGET: "module"
+  SIGNSV_FILE: "it87_serial.ko"
 
 stages:
-    - mil-internal-release_build
-    - prepare_mil-internal-release_debs
+  - develop-build_deb
+  - release-build_mod
+  - trigger-sign_mod
+  - release-build_mod_debs
+  - release-ready_to_upload
 
-mil-internal-release_build:
-    tags:
-        - Runner-Buster
-    stage: mil-internal-release_build
-    before_script:
-        - echo "deb http://mil-internal-apt:8080/mirror-debian_20201211/debian/ buster main" > /etc/apt/sources.list
-        - curl -fsSL http://mil-internal-apt:8080/mil_internal_apt.gpg | apt-key add -
-        - apt-get update
-        - apt-get install -y -qq --no-install-recommends build-essential devscripts
-        - apt-get build-dep ./ -y
-    script:
-        - dpkg-buildpackage -us -uc -b
-        - mv ../*.buildinfo .
-        - mv ../*.changes .
-        - mv ../*.deb .
-    artifacts:
-        name: "${CI_PROJECT_NAME}"
-        paths:
-        - ./*.buildinfo
-        - ./*.changes
-        - ./*.deb
+develop-build_deb:
+  tags:
+    - Runner-Buster
+  stage: develop-build_deb
+  only:
+    - /^buster/.*$/i
+  except:
+    - buster/master
+  before_script:
+    - echo "deb http://ibg-linux-apt.moxa.com:8080/mirror-buster/Debian10.9_20210328 buster main" > /etc/apt/sources.list
+    - curl -fsSL http://ibg-linux-apt.moxa.com:8080/ibg-linux-apt.gpg | apt-key add -
+    - apt-get update
+    - apt-get build-dep ./ -y
+  script:
+    - dpkg-buildpackage -us -uc
+  after_script:
+    - mv ../*.buildinfo .
+    - mv ../*.changes .
+    - mv ../*.deb .
+    - mv ../*.tar.gz .
+    - mv ../*.dsc .
+  artifacts:
+    name: "${CI_PROJECT_NAME}"
+    paths:
+      - "*.buildinfo"
+      - "*.changes"
+      - "*.deb"
+      - "*.tar.gz"
+      - "*.dsc"
 
-prepare_mil-internal-release_debs:
-    tags:
-        - Runner-Buster
-    stage: prepare_mil-internal-release_debs
-    only:
-      refs:
-        - buster/master
-    dependencies:
-        - mil-internal-release_build
-    when: manual
-    script:
-        - mkdir -p /cache/buster/mil-internal-release/
-        - cp *.deb /cache/buster/mil-internal-release/
-        - ls /cache/buster/mil-internal-release/
+release-build_mod:
+  tags:
+    - Runner-Buster
+  stage: release-build_mod
+  only:
+    refs:
+      - buster/master
+  before_script:
+    - echo "deb http://ibg-linux-apt.moxa.com:8080/mirror-buster/Debian10.9_20210328 buster main" > /etc/apt/sources.list
+    - curl -fsSL http://ibg-linux-apt.moxa.com:8080/ibg-linux-apt.gpg | apt-key add -
+    - apt-get update
+    - apt-get build-dep ./ -y
+  script:
+    - make KRELEASE=${KERNEL_REV} modules
+    - echo SIGNSV_PROJECT_NAME=${SIGNSV_PROJECT_NAME} > build_env
+    - echo SIGNSV_FILE=${SIGNSV_FILE} >> build_env
+    - echo SIGNSV_TARGET=${SIGNSV_TARGET} >> build_env
+    - echo UPSTREAM_PIPELINE_ID=$CI_PIPELINE_ID >> build_env
+    - echo UPSTREAM_PROJECT_NAME=$CI_PROJECT_NAME >> build_env
+    - mkdir -p /cache/${CI_PROJECT_NAME}/${CI_PIPELINE_ID}/output
+    - cp ./${SIGNSV_FILE} /cache/${CI_PROJECT_NAME}/${CI_PIPELINE_ID}/output/
+    - cat build_env
+    - ls /cache/${CI_PROJECT_NAME}/${CI_PIPELINE_ID}/output/ -alh
+  artifacts:
+    name: "${CI_PROJECT_NAME}"
+    paths:
+      - "*.ko"
+    reports:
+      dotenv: build_env
 
+trigger-sign_mod:
+  stage: trigger-sign_mod
+  only:
+    refs:
+      - buster/master
+  variables:
+    SIGNSV_PROJECT_NAME: $SIGNSV_PROJECT_NAME
+    SIGNSV_TARGET: $SIGNSV_TARGET
+    SIGNSV_FILE: $SIGNSV_FILE
+    UPSTREAM_PIPELINE_ID: $UPSTREAM_PIPELINE_ID
+    UPSTREAM_PROJECT_NAME: $UPSTREAM_PROJECT_NAME
+  needs:
+    - job: release-build_mod
+  trigger:
+    project: 'moxa/ibg/software/platform/linux/sys-gitlab/mxcore-private-package/signsv-tools'
+    branch: master
+    strategy: depend
+
+release-build_mod_debs:
+  tags:
+    - Runner-Buster
+  stage: release-build_mod_debs
+  only:
+    refs:
+      - buster/master
+  needs:
+    - job: release-build_mod
+    - job: trigger-sign_mod
+  before_script:
+    - echo "deb http://ibg-linux-apt.moxa.com:8080/mirror-buster/Debian10.9_20210328 buster main" > /etc/apt/sources.list
+    - curl -fsSL http://ibg-linux-apt.moxa.com:8080/ibg-linux-apt.gpg | apt-key add -
+    - apt-get update
+    - apt-get install -y kmod
+    - apt-get build-dep ./ -y
+  script:
+    - echo ${SIGNSV_FILE}
+    - ls /cache/${CI_PROJECT_NAME}/${CI_PIPELINE_ID}/signed/ -alh
+    - cp /cache/${CI_PROJECT_NAME}/${CI_PIPELINE_ID}/signed/${SIGNSV_FILE} ./${SIGNSV_FILE}
+    - modinfo ${SIGNSV_FILE}
+    - export DEB_BUILD_OPT="signed"
+    - dpkg-buildpackage -us -uc
+  after_script:
+    - mv ../*.buildinfo .
+    - mv ../*.changes .
+    - mv ../*.deb .
+    - mv ../*.tar.gz .
+    - mv ../*.dsc .
+  artifacts:
+    name: "${CI_PROJECT_NAME}"
+    paths:
+      - "*.buildinfo"
+      - "*.changes"
+      - "*.deb"
+      - "*.tar.gz"
+      - "*.dsc"
+      - "*.ko"
+
+release-ready_to_upload:
+  tags:
+    - Runner-Buster
+  stage: release-ready_to_upload
+  only:
+    refs:
+      - buster/master
+  needs:
+    - job: release-build_mod
+    - job: trigger-sign_mod
+    - job: release-build_mod_debs
+  when: manual
+  script:
+    - mkdir -p /cache/buster/mil2-internal-release/
+    - cp *.deb *.dsc *.tar.gz /cache/buster/mil2-internal-release/
+    - ls /cache/buster/mil2-internal-release/
