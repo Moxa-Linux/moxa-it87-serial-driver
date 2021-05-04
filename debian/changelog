@@ -1,3 +1,10 @@
+moxa-it87-serial-driver (1.2.1+deb10) buster; urgency=medium
+
+  [Changed]
+  * Change Linux kernel dependency to 4.19.0-14-amd64
+
+ -- Elvis Yao (姚家瑋) <ElvisCW.Yao@moxa.com>  Tue, 04 May 2021 17:07:35 +0800
+
 moxa-it87-serial-driver (1.2.0+deb10) buster; urgency=medium
 
   [Changed]
