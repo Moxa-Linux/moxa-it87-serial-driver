@@ -1,10 +1,12 @@
 #!/usr/bin/make -f
 
-KRELEASE=4.19.0-13-amd64
+KRELEASE=4.19.0-14-amd64
+OPT=$(shell echo ${DEB_BUILD_OPT})
 
 %:
 	dh $@
 
+ifneq ($(OPT), signed)
 override_dh_auto_build:
 	$(MAKE) KRELEASE=$(KRELEASE) modules
 
@@ -16,3 +18,17 @@ override_dh_auto_clean:
 
 override_dh_strip:
 	dh_strip --no-automatic-dbgsym
+else
+override_dh_auto_build:
+	$(info Skip override_dh_auto_build)
+
+override_dh_auto_install:
+	$(info Skip dh_auto_install)
+
+override_dh_auto_clean:
+	$(info Skip override_dh_auto_clean)
+
+override_dh_strip:
+	$(info Skip override_dh_strip)
+
+endif
