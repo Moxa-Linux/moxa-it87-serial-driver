@@ -1,3 +1,10 @@
+moxa-it87-serial-driver (1.2.2+deb10) buster; urgency=medium
+
+  [Changed]
+  * Change install module path to 4.19.0-14-amd64
+
+ -- Elvis Yao (姚家瑋) <ElvisCW.Yao@moxa.com>  Fri, 14 May 2021 12:56:43 +0800
+
 moxa-it87-serial-driver (1.2.1+deb10) buster; urgency=medium
 
   [Changed]
