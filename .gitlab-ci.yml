@@ -67,8 +67,6 @@ release-build_mod:
     - ls /cache/${CI_PROJECT_NAME}/${CI_PIPELINE_ID}/output/ -alh
   artifacts:
     name: "${CI_PROJECT_NAME}"
-    paths:
-      - "*.ko"
     reports:
       dotenv: build_env
 
@@ -127,7 +125,6 @@ release-build_mod_debs:
       - "*.deb"
       - "*.tar.gz"
       - "*.dsc"
-      - "*.ko"
 
 release-ready_to_upload:
   tags:
