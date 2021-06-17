@@ -363,7 +363,7 @@ static int __init it87_serial_init(void)
 
 	ret = it87_find_chip(chip);
 	if (ret < 0)
-		goto exit_misc_deregister;
+		return ret;
 
 	misc_register(&it87_serial_miscdev);
 	ret = it87_find_serial(chip);
@@ -387,4 +387,4 @@ module_exit(it87_serial_exit);
 MODULE_DESCRIPTION("Serial Port Register Control for IT8786 Super I/O chips");
 MODULE_AUTHOR("Remus Wu <remusty.wu@moxa.com>");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.1.0");
+MODULE_VERSION("1.1.1");
