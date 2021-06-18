@@ -280,7 +280,6 @@ static int it87_find_chip(struct it87_chip *chip)
 	u8 chip_rev;
 	struct it87_serial *port;
 
-	spin_lock(&chip->lock);
 	ret = superio_enter(REG_2E);
 	if (ret)
 		return ret;
@@ -288,7 +287,6 @@ static int it87_find_chip(struct it87_chip *chip)
 	chip_type = superio_inw(REG_2E, CHIPID);
 	chip_rev  = superio_inb(REG_2E, CHIPREV) & 0x0f;
 	superio_exit(REG_2E);
-	spin_unlock(&chip->lock);
 
 	switch (chip_type) {
 	case IT8783F_DEVID:
@@ -332,7 +330,6 @@ static int it87_find_serial(struct it87_chip *chip)
 {
 	int ret = 0, i;
 
-	spin_lock(&chip->lock);
 	ret = superio_enter(REG_2E);
 	if (ret)
 		return ret;
@@ -351,7 +348,6 @@ static int it87_find_serial(struct it87_chip *chip)
 	}
 
 	superio_exit(REG_2E);
-	spin_unlock(&chip->lock);
 
 	return ret;
 }
