@@ -38,6 +38,10 @@
 #define	CHIPID	0x20	/* Register: Device ID */
 #define	CHIPREV	0x22	/* Register: Device Revision */
 
+static unsigned short force_id;
+module_param(force_id, ushort, 0);
+MODULE_PARM_DESC(force_id, "Override the detected device ID");
+
 static inline int superio_enter(int ioreg)
 {
 	/*
@@ -284,7 +288,7 @@ static int it87_find_chip(struct it87_chip *chip)
 	if (ret)
 		return ret;
 
-	chip_type = superio_inw(REG_2E, CHIPID);
+	chip_type = force_id ? force_id : superio_inw(REG_2E, CHIPID);
 	chip_rev  = superio_inb(REG_2E, CHIPREV) & 0x0f;
 	superio_exit(REG_2E);
 
