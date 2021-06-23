@@ -22,6 +22,7 @@
 #include <linux/bitops.h> /* bitops */
 #include <linux/slab.h> /* kcalloc */
 #include <linux/uaccess.h> /* copy_to_user */
+#include <linux/delay.h> /* wait for chip ready */
 
 #define DRVNAME	"it87_serial"
 
@@ -360,6 +361,9 @@ static int __init it87_serial_init(void)
 {
 	int ret = 0;
 	struct it87_chip *chip = &it87_chip;
+
+	/* FIXME delay 300 ms for waiting chip ready */
+	usleep_range(300000, 300001);
 
 	ret = it87_find_chip(chip);
 	if (ret < 0)
