@@ -392,4 +392,4 @@ MODULE_SOFTDEP("pre: it87"); /* to avoid super IO drivers busy */
 MODULE_DESCRIPTION("Serial Port Register Control for IT8786 Super I/O chips");
 MODULE_AUTHOR("Remus Wu <remusty.wu@moxa.com>");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.1.1");
+MODULE_VERSION("1.3.0");
