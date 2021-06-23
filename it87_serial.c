@@ -388,6 +388,7 @@ static void __exit it87_serial_exit(void)
 module_init(it87_serial_init);
 module_exit(it87_serial_exit);
 
+MODULE_SOFTDEP("pre: it87"); /* to avoid super IO drivers busy */
 MODULE_DESCRIPTION("Serial Port Register Control for IT8786 Super I/O chips");
 MODULE_AUTHOR("Remus Wu <remusty.wu@moxa.com>");
 MODULE_LICENSE("GPL");
