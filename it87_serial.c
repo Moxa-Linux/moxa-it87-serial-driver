@@ -22,6 +22,7 @@
 #include <linux/bitops.h> /* bitops */
 #include <linux/slab.h> /* kcalloc */
 #include <linux/uaccess.h> /* copy_to_user */
+#include <linux/delay.h> /* wait for chip ready */
 
 #define DRVNAME	"it87_serial"
 
@@ -37,6 +38,10 @@
 #define	LDNREG	0x07	/* Register: Logical device select */
 #define	CHIPID	0x20	/* Register: Device ID */
 #define	CHIPREV	0x22	/* Register: Device Revision */
+
+static unsigned short force_id;
+module_param(force_id, ushort, 0);
+MODULE_PARM_DESC(force_id, "Override the detected device ID");
 
 static inline int superio_enter(int ioreg)
 {
@@ -280,15 +285,13 @@ static int it87_find_chip(struct it87_chip *chip)
 	u8 chip_rev;
 	struct it87_serial *port;
 
-	spin_lock(&chip->lock);
 	ret = superio_enter(REG_2E);
 	if (ret)
 		return ret;
 
-	chip_type = superio_inw(REG_2E, CHIPID);
+	chip_type = force_id ? force_id : superio_inw(REG_2E, CHIPID);
 	chip_rev  = superio_inb(REG_2E, CHIPREV) & 0x0f;
 	superio_exit(REG_2E);
-	spin_unlock(&chip->lock);
 
 	switch (chip_type) {
 	case IT8783F_DEVID:
@@ -332,7 +335,6 @@ static int it87_find_serial(struct it87_chip *chip)
 {
 	int ret = 0, i;
 
-	spin_lock(&chip->lock);
 	ret = superio_enter(REG_2E);
 	if (ret)
 		return ret;
@@ -351,7 +353,6 @@ static int it87_find_serial(struct it87_chip *chip)
 	}
 
 	superio_exit(REG_2E);
-	spin_unlock(&chip->lock);
 
 	return ret;
 }
@@ -361,9 +362,12 @@ static int __init it87_serial_init(void)
 	int ret = 0;
 	struct it87_chip *chip = &it87_chip;
 
+	/* FIXME delay 300 ms for waiting chip ready */
+	usleep_range(300000, 300001);
+
 	ret = it87_find_chip(chip);
 	if (ret < 0)
-		goto exit_misc_deregister;
+		return ret;
 
 	misc_register(&it87_serial_miscdev);
 	ret = it87_find_serial(chip);
@@ -384,7 +388,8 @@ static void __exit it87_serial_exit(void)
 module_init(it87_serial_init);
 module_exit(it87_serial_exit);
 
+MODULE_SOFTDEP("pre: it87"); /* to avoid super IO drivers busy */
 MODULE_DESCRIPTION("Serial Port Register Control for IT8786 Super I/O chips");
 MODULE_AUTHOR("Remus Wu <remusty.wu@moxa.com>");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.1.0");
+MODULE_VERSION("1.3.0");
