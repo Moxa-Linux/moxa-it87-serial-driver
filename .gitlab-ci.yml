@@ -2,41 +2,45 @@ variables:
     GIT_DEPTH: "1"
 
 stages:
-    - mil-internal-release_build
-    - prepare_mil-internal-release_debs
+    - build_deb
+    - ready_to_upload
 
-mil-internal-release_build:
+build_deb:
     tags:
         - Runner-Stretch
-    stage: mil-internal-release_build
+    stage: build_deb
     script:
-        - echo "deb http://mil-internal-apt:8080/mirror-debian_20200718/debian stretch main" > /etc/apt/sources.list
-        - curl -fsSL http://mil-internal-apt:8080/mil_internal_apt.gpg | apt-key add -
+        - echo "deb http://ibg-linux-apt.moxa.com:8080/mirror-stretch/Debian9.13_20200718 stretch main" > /etc/apt/sources.list
+        - curl -fsSL http://ibg-linux-apt.moxa.com:8080/ibg-linux-apt.gpg | apt-key add -
         - apt-get update
         - apt-get install -y -qq --no-install-recommends build-essential devscripts
         - apt-get build-dep ./ -y
-        - dpkg-buildpackage -us -uc -b
+        - dpkg-buildpackage -us -uc
         - mv ../*.buildinfo .
         - mv ../*.changes .
         - mv ../*.deb .
+        - mv ../*.tar.gz .
+        - mv ../*.dsc .
     artifacts:
         name: "${CI_PROJECT_NAME}"
         paths:
         - ./*.buildinfo
         - ./*.changes
         - ./*.deb
+        - ./*.tar.gz
+        - ./*.dsc
 
-prepare_mil-internal-release_debs:
+ready_to_upload:
     tags:
         - Runner-Stretch
-    stage: prepare_mil-internal-release_debs
+    stage: ready_to_upload
     only:
       refs:
         - stretch/master
     dependencies:
-        - mil-internal-release_build
+        - build_deb
     when: manual
     script:
-        - mkdir -p /cache/stretch/mil-internal-release/
-        - cp *.deb /cache/stretch/mil-internal-release/
-        - ls /cache/stretch/mil-internal-release/
+        - mkdir -p /cache/stretch/mil1-internal-release/
+        - cp *.deb *.dsc *.tar.gz /cache/stretch/mil1-internal-release/
+        - ls /cache/stretch/mil1-internal-release/
