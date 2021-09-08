@@ -23,6 +23,10 @@
 #include <linux/slab.h> /* kcalloc */
 #include <linux/uaccess.h> /* copy_to_user */
 #include <linux/delay.h> /* wait for chip ready */
+#include <linux/version.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+#include <linux/io.h> /* inb, outb */
+#endif
 
 #define DRVNAME	"it87_serial"
 
